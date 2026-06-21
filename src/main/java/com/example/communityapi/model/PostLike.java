@@ -7,34 +7,26 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "comments") // comments 테이블과 매핑
+@Table(name = "post_likes") // post_likes 테이블과 매핑
 @Getter
 @Setter
-public class Comment {
+public class PostLike {
 
     @Id // 기본키
     @GeneratedValue(strategy = GenerationType.IDENTITY) // DB가 ID 자동 생성
     private Long id;
 
-    // 댓글 작성자
+    // 좋아요를 누른 사용자
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    // 댓글이 작성된 게시글
+    // 좋아요가 눌린 게시글
     @ManyToOne
     @JoinColumn(name = "post_id")
     private Post post;
 
-    // 댓글 내용
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
-    // 생성 시간
+    // 좋아요를 누른 시간
     @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    // 수정 시간
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 }

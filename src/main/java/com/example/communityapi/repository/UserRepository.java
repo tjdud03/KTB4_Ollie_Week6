@@ -1,0 +1,18 @@
+package com.example.communityapi.repository;
+
+import com.example.communityapi.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    // 이메일로 회원 조회
+    Optional<User> findByEmail(String email);
+
+    // 이메일 중복 여부 확인
+    boolean existsByEmail(String email);
+
+    // 이메일과 비밀번호가 일치하는 회원 조회(로그인)
+    Optional<User> findByEmailAndPassword(String email, String password);
+
+}
