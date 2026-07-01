@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import com.example.communityapi.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +21,8 @@ public class PostService {
 
     // 게시글 데이터 접근
     private final PostRepository postRepository;
+
+    private final UserService userService;
 
     // 게시글 작성
     public ResponseEntity<ApiResponse> createPost(CreatePostRequest createpostRequest) {
@@ -34,9 +39,46 @@ public class PostService {
 
         Post post = new Post();
 
+        System.out.println("UserService = " + userService);
+        System.out.println("loginUser = " + userService.getLoginUser());
+
+        post.setUser(userService.getLoginUser());
+
         post.setTitle(createpostRequest.getTitle());
         post.setContent(createpostRequest.getContent());
-        post.setImageUrl(createpostRequest.getImage());
+        String imageUrl = null;
+
+        if (createpostRequest.getImage() != null
+                && !createpostRequest.getImage().isEmpty()) {
+
+            String fileName =
+                    UUID.randomUUID() + "_" +
+                            createpostRequest.getImage().getOriginalFilename();
+
+            String uploadPath = System.getProperty("user.dir") + "/uploads";
+
+            File uploadDir = new File(uploadPath);
+
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+            System.out.println(uploadDir.getAbsolutePath());
+            try {
+
+                createpostRequest.getImage().transferTo(
+                        new File(uploadDir, fileName));
+
+                imageUrl = "/uploads/" + fileName;
+
+            } catch (IOException e) {
+
+                throw new RuntimeException(e);
+
+            }
+
+        }
+
+        post.setImageUrl(imageUrl);
         post.setLikeCount(0);
         post.setViewCount(0);
         post.setCommentCount(0);

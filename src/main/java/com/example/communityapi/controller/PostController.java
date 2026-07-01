@@ -17,9 +17,9 @@ public class PostController {
     private final PostService postService;
 
     // 게시글 작성
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse> createPost(
-            @RequestBody CreatePostRequest createpostRequest) {
+            @ModelAttribute CreatePostRequest createpostRequest) {
 
         return postService.createPost(createpostRequest);
     }

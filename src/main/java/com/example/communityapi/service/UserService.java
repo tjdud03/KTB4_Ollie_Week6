@@ -6,12 +6,16 @@ import com.example.communityapi.dto.user.SignupRequest;
 import com.example.communityapi.dto.user.UpdatePasswordRequest;
 import com.example.communityapi.dto.user.UpdateProfileRequest;
 import com.example.communityapi.model.User;
+import com.example.communityapi.repository.CommentRepository;
+import com.example.communityapi.repository.PostRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.communityapi.repository.UserRepository;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,8 +24,11 @@ public class UserService {
 
     // 회원 데이터 접근
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     // 현재 로그인한 사용자
+    @Getter
     private User loginUser;
 
     // 회원가입
@@ -64,6 +71,41 @@ public class UserService {
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
+        String imageUrl = null;
+
+        if (signupRequest.getImage() != null
+                && !signupRequest.getImage().isEmpty()) {
+
+            try {
+
+                String fileName =
+                        java.util.UUID.randomUUID() + "_"
+                                + signupRequest.getImage().getOriginalFilename();
+
+                String uploadPath = System.getProperty("user.dir") + "/uploads";
+
+                java.io.File uploadDir = new java.io.File(uploadPath);
+
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
+                signupRequest.getImage().transferTo(
+                        new java.io.File(uploadDir, fileName)
+                );
+
+                imageUrl = "/uploads/" + fileName;
+
+            } catch (Exception e) {
+
+                throw new RuntimeException(e);
+
+            }
+
+        }
+
+        user.setProfileImage(imageUrl);
+
         // 회원 정보 저장
         userRepository.save(user);
 
@@ -94,6 +136,9 @@ public class UserService {
             // 로그인 사용자 저장
             loginUser = optionalUser.get();
 
+            System.out.println("UserService = " + this);
+            System.out.println("loginUser = " + loginUser);
+
             return ResponseEntity.ok(
                     new ApiResponse("login_success", null));
         }
@@ -105,23 +150,54 @@ public class UserService {
     // 회원정보 수정
     public ResponseEntity<ApiResponse> updateProfile(UpdateProfileRequest updateprofileRequest) {
 
-        // 로그인 여부 확인
+        System.out.println(updateprofileRequest.getNickname());
+        System.out.println(updateprofileRequest.getImage());
+
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse("unauthorized", null));
         }
 
-        // 회원 정보 수정
         loginUser.setNickname(updateprofileRequest.getNickname());
-        loginUser.setProfileImage(updateprofileRequest.getProfileImage());
+
+        if (updateprofileRequest.getImage() != null && !updateprofileRequest.getImage().isEmpty()) {
+
+            try {
+
+                String fileName =
+                        java.util.UUID.randomUUID() + "_"
+                                + updateprofileRequest.getImage().getOriginalFilename();
+
+                String uploadPath = System.getProperty("user.dir") + "/uploads";
+
+                java.io.File uploadDir = new java.io.File(uploadPath);
+
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+
+                updateprofileRequest.getImage().transferTo(
+                        new java.io.File(uploadDir, fileName)
+                );
+
+                loginUser.setProfileImage("/uploads/" + fileName);
+
+            } catch (Exception e) {
+
+                throw new RuntimeException(e);
+
+            }
+
+        }
+
         loginUser.setUpdatedAt(LocalDateTime.now());
 
-        // 수정된 회원 정보 저장
         userRepository.save(loginUser);
 
         return ResponseEntity.ok(
                 new ApiResponse("update_profile_success", null)
         );
+
     }
 
     // 비밀번호 수정
@@ -165,6 +241,7 @@ public class UserService {
     }
 
     // 회원 탈퇴
+    @Transactional
     public ResponseEntity<ApiResponse> deleteUser() {
 
         // 로그인 여부 확인
@@ -172,6 +249,12 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse("login_required", null));
         }
+
+        // 내가 작성한 댓글 삭제
+        commentRepository.deleteAllByUser(loginUser);
+
+        // 내가 작성한 게시글 삭제
+        postRepository.deleteAllByUser(loginUser);
 
         // 회원 삭제
         userRepository.delete(loginUser);
@@ -181,5 +264,19 @@ public class UserService {
 
         return ResponseEntity.ok(
                 new ApiResponse("delete_user_success", null));
+    }
+
+    // 현재 로그인한 회원 조회
+    public ResponseEntity<ApiResponse> getLoginUserInfo() {
+
+        if (loginUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse("get_user_success", loginUser)
+        );
+
     }
 }

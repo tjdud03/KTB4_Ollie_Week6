@@ -7,6 +7,7 @@ import com.example.communityapi.dto.user.UpdatePasswordRequest;
 import com.example.communityapi.dto.user.UpdateProfileRequest;
 import com.example.communityapi.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,11 +20,12 @@ public class UserController {
     private final UserService userService;
 
     // 회원가입
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> signup(
-            @RequestBody SignupRequest signupRequest) {
+            @ModelAttribute SignupRequest signupRequest) {
 
         return userService.signup(signupRequest);
+
     }
 
     // 로그인
@@ -35,9 +37,9 @@ public class UserController {
     }
 
     // 회원정보 수정
-    @PatchMapping("/profile")
+    @PatchMapping(value = "/profile", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse> updateProfile(
-            @RequestBody UpdateProfileRequest updateprofileRequest) {
+            @ModelAttribute UpdateProfileRequest updateprofileRequest) {
 
         return userService.updateProfile(updateprofileRequest);
     }
@@ -55,5 +57,12 @@ public class UserController {
     public ResponseEntity<ApiResponse> deleteUser() {
 
         return userService.deleteUser();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse> getLoginUser() {
+
+        return userService.getLoginUserInfo();
+
     }
 }

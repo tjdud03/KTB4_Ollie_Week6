@@ -23,6 +23,8 @@ public class CommentService {
     // 게시글 조회를 위한 Service
     private final PostService postService;
 
+    private final UserService userService;
+
     // 댓글 작성
     public ResponseEntity<ApiResponse> createComment(
             Long postId,
@@ -47,6 +49,8 @@ public class CommentService {
         Post post = optionalPost.get();
 
         Comment comment = new Comment();
+
+        comment.setUser(userService.getLoginUser());
 
         // 게시글과 댓글 연관관계 설정
         comment.setPost(post);
