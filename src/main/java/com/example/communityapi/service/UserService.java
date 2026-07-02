@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import com.example.communityapi.repository.UserRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+
+    // 비밀번호 암호화
+    private final PasswordEncoder passwordEncoder;
 
     // 현재 로그인한 사용자
     @Getter
@@ -63,7 +67,10 @@ public class UserService {
         User user = new User();
 
         user.setEmail(signupRequest.getEmail());
-        user.setPassword(signupRequest.getPassword());
+        // 비밀번호 암호화
+        user.setPassword(
+                passwordEncoder.encode(signupRequest.getPassword())
+        );
         user.setNickname(signupRequest.getNickname());
 
         // 회원가입 및 수정 시간 저장
@@ -126,25 +133,41 @@ public class UserService {
                     .body(new ApiResponse("invalid_request", null));
         }
 
-        // 이메일과 비밀번호가 일치하는 회원 조회
-        Optional<User> optionalUser = userRepository.findByEmailAndPassword(
-                loginRequest.getEmail(),
-                loginRequest.getPassword()
-        );
+        // 이메일로 회원 조회
+        Optional<User> optionalUser =
+                userRepository.findByEmail(loginRequest.getEmail());
 
-        if (optionalUser.isPresent()) {
-            // 로그인 사용자 저장
-            loginUser = optionalUser.get();
+        // 회원이 없는 경우
+        if (optionalUser.isEmpty()) {
 
-            System.out.println("UserService = " + this);
-            System.out.println("loginUser = " + loginUser);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("invalid_email_or_password", null));
 
-            return ResponseEntity.ok(
-                    new ApiResponse("login_success", null));
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse("invalid_email_or_password", null));
+        User user = optionalUser.get();
+
+        // 비밀번호 일치 여부 확인
+        if (!passwordEncoder.matches(
+                loginRequest.getPassword(),
+                user.getPassword()
+        )) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("invalid_email_or_password", null));
+
+        }
+
+        // 로그인 사용자 저장
+        loginUser = user;
+
+        System.out.println("UserService = " + this);
+        System.out.println("loginUser = " + loginUser);
+
+        return ResponseEntity.ok(
+                new ApiResponse("login_success", null)
+        );
+
     }
 
     // 회원정보 수정

@@ -12,7 +12,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 이메일 중복 여부 확인
     boolean existsByEmail(String email);
 
-    // 이메일과 비밀번호가 일치하는 회원 조회(로그인)
-    Optional<User> findByEmailAndPassword(String email, String password);
-
 }
