@@ -121,6 +121,21 @@ public class CommentService {
                     .body(new ApiResponse("comment_not_found", null));
         }
 
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 댓글 작성자와 현재 로그인한 회원이 다른 경우 수정 거부
+        if (!comment.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("forbidden", null));
+        }
+
         // 댓글 내용 수정
         comment.setContent(updatecommentRequest.getContent());
         comment.setUpdatedAt(LocalDateTime.now());
@@ -151,6 +166,21 @@ public class CommentService {
         if (!comment.getPost().getId().equals(postId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse("comment_not_found", null));
+        }
+
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 댓글 작성자와 현재 로그인한 회원이 다른 경우 삭제 거부
+        if (!comment.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("forbidden", null));
         }
 
         // 댓글 삭제

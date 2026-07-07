@@ -1,5 +1,6 @@
 package com.example.communityapi.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +42,27 @@ public class SecurityConfig {
                 // HTTP Basic 인증 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable())
 
+                // Spring Security 로그아웃 설정
+                .logout(logout -> logout
+
+                        // 로그아웃 요청 주소
+                        .logoutUrl("/users/logout")
+
+                        // 로그아웃 성공 시 200 응답 반환
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                response.setStatus(HttpServletResponse.SC_OK)
+                        )
+
+                        // 로그아웃 시 세션 무효화
+                        .invalidateHttpSession(true)
+
+                        // SecurityContext 인증 정보 삭제
+                        .clearAuthentication(true)
+
+                        // 세션 쿠키 삭제
+                        .deleteCookies("JSESSIONID")
+                )
+
                 // 요청별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
 
@@ -50,7 +72,8 @@ public class SecurityConfig {
                         // 회원가입, 로그인은 누구나 접근 가능
                         .requestMatchers(
                                 "/users",
-                                "/users/login"
+                                "/users/login",
+                                "/users/logout"
                         ).permitAll()
 
                         // 그 외 요청은 로그인 필요

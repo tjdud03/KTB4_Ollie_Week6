@@ -136,7 +136,9 @@ public class PostService {
     }
 
     // 게시글 수정
-    public ResponseEntity<ApiResponse> updatePost(Long id, UpdatePostRequest updatepostRequest) {
+    public ResponseEntity<ApiResponse> updatePost(
+            Long id,
+            UpdatePostRequest updatepostRequest) {
 
         // 제목, 내용 입력 여부 확인
         if (updatepostRequest.getTitle() == null
@@ -157,6 +159,21 @@ public class PostService {
         }
 
         Post post = optionalPost.get();
+
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 게시글 작성자와 현재 로그인한 회원이 다른 경우 수정 거부
+        if (!post.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("forbidden", null));
+        }
 
         // 게시글 내용 수정
         post.setTitle(updatepostRequest.getTitle());
@@ -181,8 +198,25 @@ public class PostService {
                     .body(new ApiResponse("post_not_found", null));
         }
 
+        Post post = optionalPost.get();
+
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 게시글 작성자와 현재 로그인한 회원이 다른 경우 삭제 거부
+        if (!post.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse("forbidden", null));
+        }
+
         // 게시글 삭제
-        postRepository.delete(optionalPost.get());
+        postRepository.delete(post);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse("no_content", null));
