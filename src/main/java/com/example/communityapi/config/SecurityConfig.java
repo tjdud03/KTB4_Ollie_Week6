@@ -20,31 +20,39 @@ public class SecurityConfig {
     // Spring Security에서 사용할 사용자 조회 서비스
     private final CustomUserDetailsService customUserDetailsService;
 
-    // 비밀번호 암호화 객체
-    private final PasswordEncoder passwordEncoder;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // CSRF 비활성화
-            .csrf(csrf -> csrf.disable())
+                // CSRF 비활성화
+                .csrf(csrf -> csrf.disable())
 
-            // H2 Console iframe 허용
-            .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.disable())
-            )
+                // H2 Console iframe 허용
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable())
+                )
 
-            // 요청별 접근 권한 설정
-            .authorizeHttpRequests(auth -> auth
+                // Spring Security 기본 로그인 화면 사용 안 함
+                .formLogin(form -> form.disable())
 
-                // H2 Console 접근 허용
-                .requestMatchers("/h2-console/**").permitAll()
+                // HTTP Basic 인증 비활성화
+                .httpBasic(httpBasic -> httpBasic.disable())
 
-                // 모든 요청 허용
-                .anyRequest().permitAll()
-            );
+                // 요청별 접근 권한 설정
+                .authorizeHttpRequests(auth -> auth
 
+                        // H2 Console 허용
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // 회원가입, 로그인은 누구나 접근 가능
+                        .requestMatchers(
+                                "/users",
+                                "/users/login"
+                        ).permitAll()
+
+                        // 그 외 요청은 로그인 필요
+                        .anyRequest().authenticated()
+                );
         // Security 설정 적용
         return http.build();
     }
@@ -65,7 +73,7 @@ public class SecurityConfig {
         provider.setUserDetailsService(customUserDetailsService);
 
         // 비밀번호 암호화 방식 등록
-        provider.setPasswordEncoder(passwordEncoder);
+        provider.setPasswordEncoder(passwordEncoder());
 
         return provider;
     }

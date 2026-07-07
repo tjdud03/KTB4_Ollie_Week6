@@ -4,6 +4,7 @@ import com.example.communityapi.dto.comment.CreateCommentRequest;
 import com.example.communityapi.dto.comment.UpdateCommentRequest;
 import com.example.communityapi.dto.common.ApiResponse;
 import com.example.communityapi.model.Comment;
+import com.example.communityapi.model.User;
 import com.example.communityapi.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,17 @@ public class CommentService {
 
         Comment comment = new Comment();
 
-        comment.setUser(userService.getLoginUser());
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 댓글 작성자 설정
+        comment.setUser(currentUser);
 
         // 게시글과 댓글 연관관계 설정
         comment.setPost(post);

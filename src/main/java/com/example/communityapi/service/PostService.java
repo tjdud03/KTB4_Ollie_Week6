@@ -4,6 +4,7 @@ import com.example.communityapi.dto.common.ApiResponse;
 import com.example.communityapi.dto.post.CreatePostRequest;
 import com.example.communityapi.dto.post.UpdatePostRequest;
 import com.example.communityapi.model.Post;
+import com.example.communityapi.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -39,10 +40,17 @@ public class PostService {
 
         Post post = new Post();
 
-        System.out.println("UserService = " + userService);
-        System.out.println("loginUser = " + userService.getLoginUser());
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
 
-        post.setUser(userService.getLoginUser());
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 게시글 작성자 설정
+        post.setUser(currentUser);
 
         post.setTitle(createpostRequest.getTitle());
         post.setContent(createpostRequest.getContent());
