@@ -8,7 +8,10 @@ import com.example.communityapi.dto.user.UpdateProfileRequest;
 import com.example.communityapi.model.User;
 import com.example.communityapi.repository.CommentRepository;
 import com.example.communityapi.repository.PostRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
@@ -124,7 +127,8 @@ public class UserService {
     }
 
     // 로그인
-    public ResponseEntity<ApiResponse> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse> login(
+            LoginRequest loginRequest, HttpServletRequest httpservletRequest) {
 
         // 요청값 검사
         if (loginRequest.getEmail() == null
@@ -148,8 +152,21 @@ public class UserService {
                             )
                     );
 
-            // 인증 정보를 SecurityContext에 저장
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 비어있는 SecurityContext 생성
+            SecurityContext securityContext =
+                    SecurityContextHolder.createEmptyContext();
+
+            // 인증 성공 정보를 SecurityContext에 저장
+            securityContext.setAuthentication(authentication);
+
+            // 현재 요청에서 사용할 SecurityContext 설정
+            SecurityContextHolder.setContext(securityContext);
+
+            // 다음 요청에서도 인증 상태를 유지할 수 있도록 세션에 SecurityContext 저장
+            httpservletRequest.getSession(true).setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                    securityContext
+            );
 
             System.out.println("인증 성공 = " + authentication.getName());
 

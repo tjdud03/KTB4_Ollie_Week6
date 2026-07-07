@@ -14,12 +14,14 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
 
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(CorsRegistry corsRegistry) {
 
-                registry.addMapping("/**")
-                        .allowedOrigins("http://127.0.0.1:5500")
-                        .allowedMethods("*")
-                        .allowedHeaders("*");
+                corsRegistry.addMapping("/**")
+                            .allowedOrigins("http://localhost:5500")
+                            .allowedMethods("*")
+                            .allowedHeaders("*")
+                            // 세션 쿠키를 포함한 교차 출처 요청 허용
+                            .allowCredentials(true);
             }
 
         };

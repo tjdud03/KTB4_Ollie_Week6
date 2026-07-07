@@ -27,6 +27,9 @@ public class SecurityConfig {
                 // CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
 
+                // Spring Security에서 기존 MVC CORS 설정 사용
+                .cors(cors -> {})
+
                 // H2 Console iframe 허용
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.disable())

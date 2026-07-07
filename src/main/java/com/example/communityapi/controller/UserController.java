@@ -6,6 +6,7 @@ import com.example.communityapi.dto.user.SignupRequest;
 import com.example.communityapi.dto.user.UpdatePasswordRequest;
 import com.example.communityapi.dto.user.UpdateProfileRequest;
 import com.example.communityapi.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +32,9 @@ public class UserController {
     // 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(
-            @RequestBody LoginRequest loginRequest) {
+            @RequestBody LoginRequest loginRequest, HttpServletRequest httpservletRequest) {
 
-        return userService.login(loginRequest);
+        return userService.login(loginRequest, httpservletRequest);
     }
 
     // 회원정보 수정
