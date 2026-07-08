@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.example.communityapi.repository.UserRepository;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -60,7 +59,7 @@ public class UserService {
 
         // 이메일 중복 검사
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ApiResponse("email_already_exists", null));
         }
 
