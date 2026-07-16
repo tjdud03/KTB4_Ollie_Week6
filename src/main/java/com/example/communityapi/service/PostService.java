@@ -4,12 +4,14 @@ import com.example.communityapi.dto.common.ApiResponse;
 import com.example.communityapi.dto.post.CreatePostRequest;
 import com.example.communityapi.dto.post.UpdatePostRequest;
 import com.example.communityapi.model.Post;
+import com.example.communityapi.model.PostLike;
 import com.example.communityapi.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import com.example.communityapi.repository.PostLikeRepository;
 import com.example.communityapi.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import java.io.File;
@@ -22,6 +24,9 @@ public class PostService {
 
     // 게시글 데이터 접근
     private final PostRepository postRepository;
+
+    // 게시글 좋아요 데이터 접근
+    private final PostLikeRepository postLikeRepository;
 
     private final UserService userService;
 
@@ -131,6 +136,14 @@ public class PostService {
         // 변경된 조회수 저장
         postRepository.save(post);
 
+        // 로그인한 회원이 이 게시글에 좋아요를 눌렀는지 여부 설정
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser != null) {
+            post.setLiked(
+                    postLikeRepository.findByUserAndPost(currentUser, post).isPresent());
+        }
+
         return ResponseEntity.ok(
                 new ApiResponse("get_post_success", post));
     }
@@ -222,7 +235,7 @@ public class PostService {
                 .body(new ApiResponse("no_content", null));
     }
 
-    // 게시글 좋아요
+    // 게시글 좋아요 (이미 누른 상태면 좋아요 취소)
     public ResponseEntity<ApiResponse> likePost(Long postId) {
 
         // 게시글 조회
@@ -234,6 +247,40 @@ public class PostService {
         }
 
         Post post = optionalPost.get();
+
+        // SecurityContext의 인증 정보를 기반으로 현재 로그인한 회원 조회
+        User currentUser = userService.getCurrentUser();
+
+        // 인증된 회원이 없는 경우
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("login_required", null));
+        }
+
+        // 현재 회원이 이미 이 게시글에 좋아요를 눌렀는지 조회
+        Optional<PostLike> existingLike =
+                postLikeRepository.findByUserAndPost(currentUser, post);
+
+        if (existingLike.isPresent()) {
+
+            // 이미 눌렀다면 좋아요 취소
+            postLikeRepository.delete(existingLike.get());
+            post.setLikeCount(post.getLikeCount() - 1);
+            post.setUpdatedAt(LocalDateTime.now());
+            postRepository.save(post);
+
+            return ResponseEntity.ok(
+                    new ApiResponse("like_cancel_success", null));
+        }
+
+        // 좋아요 기록 생성
+        PostLike postLike = new PostLike();
+
+        postLike.setUser(currentUser);
+        postLike.setPost(post);
+        postLike.setCreatedAt(LocalDateTime.now());
+
+        postLikeRepository.save(postLike);
 
         // 좋아요 수 증가
         post.setLikeCount(post.getLikeCount() + 1);

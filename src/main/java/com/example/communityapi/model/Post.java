@@ -61,4 +61,16 @@ public class Post {
             orphanRemoval = true
     )
     private List<Comment> comments;
+
+    @JsonIgnore
+    @OneToMany(
+            mappedBy = "post",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<PostLike> postLikes;
+
+    // 현재 로그인한 회원의 좋아요 여부 (DB에는 저장하지 않고 조회 시점에 계산)
+    @Transient
+    private boolean liked;
 }

@@ -7,7 +7,10 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "post_likes") // post_likes 테이블과 매핑
+@Table(
+        name = "post_likes", // post_likes 테이블과 매핑
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
+)
 @Getter
 @Setter
 public class PostLike {
