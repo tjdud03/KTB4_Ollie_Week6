@@ -186,7 +186,8 @@ public class CommentService {
         // 댓글 삭제
         commentRepository.delete(comment);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(new ApiResponse("no_content", null));
+        return ResponseEntity.ok(
+                new ApiResponse("delete_comment_success", null)
+        );
     }
 }

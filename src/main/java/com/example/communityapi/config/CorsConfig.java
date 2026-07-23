@@ -17,7 +17,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry corsRegistry) {
 
                 corsRegistry.addMapping("/**")
-                            .allowedOrigins("http://localhost:5500")
+                            .allowedOrigins("http://localhost:5500", "http://localhost:5173")
                             .allowedMethods("*")
                             .allowedHeaders("*")
                             // 세션 쿠키를 포함한 교차 출처 요청 허용

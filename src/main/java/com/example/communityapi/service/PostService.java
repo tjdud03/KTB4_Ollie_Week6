@@ -117,7 +117,8 @@ public class PostService {
     }
 
     // 게시글 상세 조회
-    public ResponseEntity<ApiResponse> getPostDetail(Long id) {
+    // countView가 false면 조회수를 올리지 않음 (수정 페이지에서 기존 내용만 불러올 때 사용)
+    public ResponseEntity<ApiResponse> getPostDetail(Long id, boolean countView) {
 
         // 게시글 조회
         Optional<Post> optionalPost = postRepository.findById(id);
@@ -129,12 +130,16 @@ public class PostService {
 
         Post post = optionalPost.get();
 
-        // 조회수 증가
-        post.setViewCount(post.getViewCount() + 1);
-        post.setUpdatedAt(LocalDateTime.now());
+        if (countView) {
 
-        // 변경된 조회수 저장
-        postRepository.save(post);
+            // 조회수 증가
+            post.setViewCount(post.getViewCount() + 1);
+            post.setUpdatedAt(LocalDateTime.now());
+
+            // 변경된 조회수 저장
+            postRepository.save(post);
+
+        }
 
         // 로그인한 회원이 이 게시글에 좋아요를 눌렀는지 여부 설정
         User currentUser = userService.getCurrentUser();
@@ -231,8 +236,9 @@ public class PostService {
         // 게시글 삭제
         postRepository.delete(post);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(new ApiResponse("no_content", null));
+        return ResponseEntity.ok(
+                new ApiResponse("delete_post_success", null)
+        );
     }
 
     // 게시글 좋아요 (이미 누른 상태면 좋아요 취소)

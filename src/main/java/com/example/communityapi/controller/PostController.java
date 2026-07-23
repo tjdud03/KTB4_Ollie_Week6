@@ -32,11 +32,13 @@ public class PostController {
     }
 
     // 게시글 상세 조회
+    // countView=false로 호출하면 조회수를 올리지 않음 (수정 페이지에서 기존 내용만 불러올 때 사용)
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getPostDetail(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean countView) {
 
-        return postService.getPostDetail(id);
+        return postService.getPostDetail(id, countView);
     }
 
     // 게시글 수정
